@@ -7,7 +7,7 @@ from netaddr import IPNetwork,IPAddress
 from ctypes import *
 
 # host to listen on
-host   = "192.168.0.187"
+host   = "192.168.91.129"
 
 # subnet to target
 subnet = "192.168.0.0/24"
@@ -20,7 +20,7 @@ def udp_sender(subnet,magic_message):
     
     for ip in IPNetwork(subnet):
         try:
-            sender.sendto(magic_message,("%s" % ip,65212))
+            sender.sendto(bytes(magic_message,'UTF-8'),("%s" % ip,65212))
         except:
             pass
         
@@ -50,8 +50,8 @@ class IP(Structure):
         self.protocol_map = {1:"ICMP", 6:"TCP", 17:"UDP"}
         
         # human readable IP addresses
-        self.src_address = socket.inet_ntoa(struct.pack("<L",self.src))
-        self.dst_address = socket.inet_ntoa(struct.pack("<L",self.dst))
+        self.src_address = socket.inet_ntoa(struct.pack("<f",self.src))
+        self.dst_address = socket.inet_ntoa(struct.pack("<f",self.dst))
     
         # human readable protocol
         try:
@@ -107,7 +107,7 @@ try:
         raw_buffer = sniffer.recvfrom(65565)[0]
         
         # create an IP header from the first 20 bytes of the buffer
-        ip_header = IP(raw_buffer[0:20])
+        ip_header = IP(raw_buffer[0:32])
       
         #print "Protocol: %s %s -> %s" % (ip_header.protocol, ip_header.src_address, ip_header.dst_address)
     
@@ -132,7 +132,7 @@ try:
                 if IPAddress(ip_header.src_address) in IPNetwork(subnet):
                     
                     # test for our magic message
-                    if raw_buffer[len(raw_buffer)-len(magic_message):] == magic_message:
+                    if str(raw_buffer[len(raw_buffer)-len(magic_message):])[2:-1] == magic_message:
                         print "Host Up: %s" % ip_header.src_address
 # handle CTRL-C
 except KeyboardInterrupt:
